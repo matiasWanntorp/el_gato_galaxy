@@ -1,4 +1,6 @@
-categories: [Sequence Analysis]
+categories: []
 description: el_gato
+homepage_url: https://github.com/appliedbinf/el_gato.git
 name: el_gato
 owner: matwan
+remote_repository_url: https://github.com/matiasWanntorp/el_gato_galaxy.git
