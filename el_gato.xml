@@ -1,0 +1,85 @@
+<tool id="el_gato" name="el_gato" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" python_template_version="3.5" profile="21.05">
+    <description>In silico SBT for Legionella pneumophila</description>    
+    <macros>
+        <token name="@TOOL_VERSION@">1.22.0</token>
+        <token name="@VERSION_SUFFIX@">1</token>
+    </macros>
+    <requirements>
+        <requirement type="package" version="@TOOL_VERSION@">el_gato</requirement>
+    </requirements>
+    <command><![CDATA[
+        ## Run el_gato on each assembly
+        #for $asm in $assembly:
+            base='${asm.element_identifier}' &&
+            base=\${base%.fasta} &&
+            el_gato.py --assembly '${asm}' --out "output_\${base}" &&
+            sed -i "s/^>/>\${base}_/" "output_\${base}/identified_alleles.fna" &&
+        #end for
+        ## Concatenate all outputs
+        cat output_*/identified_alleles.fna > all_alleles.fna &&
+        ## Split by gene name (update gene list as needed)
+        for gene in mip mompS proA pilE flaA asd neuA; do
+            grep -A1 "_\${gene}\$" all_alleles.fna | grep -v "^--\$" > "\${gene}.fasta" || touch "\${gene}.fasta";
+        done
+]]></command>
+    <inputs>
+        <param name="assembly" type="data_collection" collection_type="list" format="fasta" label="Assembled genomes" help="Collection of assembled bacterial genomes in FASTA format" />
+    </inputs>
+    <outputs>
+        <data name="mip" format="fasta" from_work_dir="mip.fasta" label="${tool.name} mip on ${on_string}" />
+        <data name="mompS" format="fasta" from_work_dir="mompS.fasta" label="${tool.name} mompS on ${on_string}" />
+        <data name="proA" format="fasta" from_work_dir="proA.fasta" label="${tool.name} proA on ${on_string}" />
+        <data name="pilE" format="fasta" from_work_dir="pilE.fasta" label="${tool.name} pilE on ${on_string}" />
+        <data name="flaA" format="fasta" from_work_dir="flaA.fasta" label="${tool.name} flaA on ${on_string}" />
+        <data name="asd" format="fasta" from_work_dir="asd.fasta" label="${tool.name} asd on ${on_string}" />
+        <data name="neuA" format="fasta" from_work_dir="neuA.fasta" label="${tool.name} neuA on ${on_string}" />
+    </outputs>
+    <tests>
+        <test>
+            <param name="assembly">
+                <collection type="list">
+                    <element name="sample1" value="test_genome1.fasta"/>
+                    <element name="sample2" value="test_genome2.fasta"/>
+                </collection>
+            </param>
+            <output name="mip" file="expected_mip.fasta" ftype="fasta"/>
+            <output name="mompS" file="expected_mompS.fasta" ftype="fasta"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+**What it does**
+
+El_gato performs in silico sequence-based typing (SBT) for *Legionella pneumophila* isolates. This tool extracts and analyzes seven key genes used in the *L. pneumophila* sequence-based typing scheme to facilitate molecular epidemiological studies and strain identification.
+
+**Inputs**
+
+* **Assembled genomes**: A collection of bacterial genome assemblies in FASTA format. These should be complete or draft genome assemblies of *L. pneumophila* isolates.
+
+**Outputs**
+
+The tool produces seven separate FASTA files, each containing the extracted allele sequences for one of the SBT genes:
+
+* **mip.fasta**: Macrophage infectivity potentiator gene sequences
+* **mompS.fasta**: Major outer membrane protein gene sequences  
+* **proA.fasta**: Gamma-glutamyl phosphate reductase gene sequences
+* **pilE.fasta**: Pilin gene sequences
+* **flaA.fasta**: Flagellin gene sequences
+* **asd.fasta**: Aspartate-semialdehyde dehydrogenase gene sequences
+* **neuA.fasta**: N-acetylneuraminate cytidylyltransferase gene sequences
+
+
+**Technical Details**
+
+The tool processes each assembly individually using el_gato.py, then combines and organizes results by gene. Sample identifiers are preserved in sequence headers to maintain traceability from input to output.
+
+    ]]></help>
+    <citations>
+        <citation type="bibtex">
+@misc{githubseqtk,
+  title = {el_gato},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  url = {https://github.com/appliedbinf/el_gato},
+}</citation>
+    </citations>
+</tool>
